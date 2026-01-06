@@ -88,6 +88,10 @@ client.on('ready', () => {
     const reactionManager = require('./commands/reactionManager');
     reactionManager.initialize(client);
 
+    // Initialize AI System
+    const aiManager = require('./commands/aiManager');
+    aiManager.initialize(client);
+
     // Start Dashboard
     dashboard(client);
 });

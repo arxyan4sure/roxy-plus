@@ -287,6 +287,58 @@ module.exports = (client) => {
         } catch (e) { res.status(500).json({ error: e.message }); }
     });
 
+    // --- AI Chat Routes ---
+    app.get('/ai', (req, res) => {
+        res.render('cmd_ai', { user: client.user, page: 'ai' }); // page 'ai' for highlighting if added to menu
+    });
+
+    app.get('/api/ai', (req, res) => {
+        const aiManager = require('../commands/aiManager');
+        const data = aiManager.loadData();
+
+        // Enrich Data for UI (Server/Channel/User names)
+        // Similar to Reaction, we want to show nice lists
+
+        const enrichedServers = (data.enabledServers || []).map(id => {
+            const g = client.guilds.cache.get(id);
+            return { id, name: g ? g.name : 'Unknown Server', icon: g ? g.iconURL({ dynamic: true }) : 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        });
+        const enrichedChannels = (data.enabledChannels || []).map(id => {
+            const c = client.channels.cache.get(id);
+            return { id, name: c ? c.name : 'Unknown Channel', guildName: c?.guild?.name || 'Unknown', guildIcon: c?.guild?.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        });
+        const enrichedFreeWill = (data.freeWillChannels || []).map(id => {
+            const c = client.channels.cache.get(id);
+            return { id, name: c ? c.name : 'Unknown Channel', guildName: c?.guild?.name || 'Unknown', guildIcon: c?.guild?.iconURL({ dynamic: true }) || 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        });
+        const enrichedUsers = (data.dmUsers || []).map(id => {
+            const u = client.users.cache.get(id); // Users might not be cached if not seen?
+            // Selfbots usually have large cache if they are in servers.
+            return { id, username: u ? u.username : 'Unknown User', avatar: u ? u.displayAvatarURL({ dynamic: true }) : 'https://cdn.discordapp.com/embed/avatars/0.png' };
+        });
+
+        res.json({ ...data, enrichedServers, enrichedChannels, enrichedFreeWill, enrichedUsers });
+    });
+
+    app.post('/api/ai', (req, res) => {
+        const aiManager = require('../commands/aiManager');
+        aiManager.saveData(req.body);
+        res.json({ success: true });
+    });
+
+    app.post('/api/validate/user', async (req, res) => {
+        const { id } = req.body;
+        try {
+            const user = await client.users.fetch(id).catch(() => null);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+            res.json({
+                id: user.id,
+                username: user.username,
+                avatar: user.displayAvatarURL({ dynamic: true })
+            });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    });
+
     app.get('/commands/reaction', (req, res) => {
         res.render('cmd_reaction', { user: client.user, page: 'commands' });
     });

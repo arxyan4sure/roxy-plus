@@ -1,0 +1,24 @@
+{
+    "global": false,
+    "enabledServers": [],
+    "enabledChannels": [
+        "1457323046926028860"
+    ],
+    "dmUsers": [
+        "1123856956780728411"
+    ],
+    "freeWillChannels": [
+        "1457323142514081944"
+    ],
+    "aiName": "Roxy",
+    "backstory": "You are Roxy, a helpful and witty anime waifu.",
+    "personality": "Friendly, helpful, and sometimes sarcastic.",
+    "rules": "Keep responses short under 5-15 words",
+    "modelType": "fast",
+    "bannedWords": [
+        "year old",
+        "y/o",
+        "birth",
+        "age"
+    ]
+}
