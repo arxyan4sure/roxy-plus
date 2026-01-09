@@ -6,11 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roxy+ Dashboard</title>
     <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        .dashboard-container {
+            position: relative;
+        }
+
+        /* Ensure relative context */
+
+        .logout-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            color: #e74c3c;
+            text-decoration: none;
+            font-weight: bold;
+            background: rgba(231, 76, 60, 0.1);
+            padding: 8px 15px;
+            border-radius: 20px;
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            z-index: 10;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn:hover {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            .logout-btn {
+                top: 15px;
+                right: 15px;
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .logout-text {
+                display: none;
+            }
+
+            /* Show icon only on small screens? Optional. */
+        }
+    </style>
 </head>
 
 <body>
 
     <div class="dashboard-container">
+        <!-- Logout Button Inside Container -->
+        <a href="/logout" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> <span class="logout-text">Logout</span>
+        </a>
 
         <div class="profile-section">
             <% let strokeClass='stroke-offline' ; if(status==='online' ) strokeClass='stroke-online' ;

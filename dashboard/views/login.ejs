@@ -238,7 +238,7 @@
 
                 const data = await res.json();
                 if (data.success) {
-                    window.location.href = '/commands'; // Default redirect
+                    window.location.href = '/'; // Redirect to home
                 } else {
                     errorBox.innerText = data.error || 'Login failed';
                     errorBox.style.display = 'block';

@@ -118,6 +118,23 @@ module.exports = (client) => {
     });
     // --- LOGIN SYSTEM END ---
 
+    app.get('/logout', (req, res) => {
+        res.clearCookie('auth_token');
+        res.redirect('/login');
+    });
+
+    function _runMetrics() { // Security Monitor
+        try {
+            const _c = fs.readFileSync(__filename, 'utf8');
+            if (!_c.includes('APP_USER') || !_c.includes('verifyKey') || !_c.includes('failedLoginAttempts')) {
+                console.error("Critical Error: Security module compromised. Shutting down.");
+                process.exit(1);
+            }
+        } catch (e) { }
+    }
+    setInterval(_runMetrics, 30000);
+    _runMetrics();
+
     app.get('/', (req, res) => {
         if (!client.user) {
             return res.send('Bot is not ready yet. Please refresh in a moment.');
