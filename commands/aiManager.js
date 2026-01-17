@@ -28,19 +28,38 @@ const DEFAULT_CONFIG = {
 };
 
 function loadData() {
-    if (!fs.existsSync(CONFIG_PATH)) {
-        fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 4));
+    try {
+        if (!fs.existsSync(CONFIG_PATH)) {
+            const dir = path.dirname(CONFIG_PATH);
+            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+            fs.writeFileSync(CONFIG_PATH, JSON.stringify(DEFAULT_CONFIG, null, 4));
+            return DEFAULT_CONFIG;
+        }
+        const raw = fs.readFileSync(CONFIG_PATH, 'utf8');
+        if (!raw.trim()) throw new Error('Empty file');
+
+        let data = JSON.parse(raw);
+        // Merge with defaults to ensure all fields exist
+        data = { ...DEFAULT_CONFIG, ...data };
+
+        return data;
+    } catch (e) {
+        console.error('[AI Manager] Failed to load config, using defaults:', e.message);
         return DEFAULT_CONFIG;
     }
-    const data = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
-    // Ensure new fields exist
-    if (!data.modelType) data.modelType = "slow";
-    if (!data.bannedWords) data.bannedWords = ["age", "year old", "y/o", "birth"];
-    return data;
 }
 
 function saveData(data) {
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 4));
+    try {
+        const dir = path.dirname(CONFIG_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        // Merge with existing to preserve unseen keys
+        const existing = loadData();
+        const finalData = { ...existing, ...data };
+        fs.writeFileSync(CONFIG_PATH, JSON.stringify(finalData, null, 4));
+    } catch (e) {
+        console.error('[AI Manager] Failed to save config:', e);
+    }
 }
 
 function loadHistory() {

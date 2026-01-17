@@ -30,6 +30,12 @@ class ServerCloner {
             emojisCreated: 0,
             failed: 0
         };
+        this.stopped = false;
+    }
+
+    stop() {
+        this.stopped = true;
+        this.log('🛑 Stop signal received. Halting process...');
     }
 
     async cloneServer(sourceGuildId, targetGuildId, options = {}) {
@@ -62,8 +68,13 @@ class ServerCloner {
                 await this.cloneChannels(sourceGuild, targetGuild);
             }
 
-            if (opts.cloneEmojis) await this.cloneEmojis(sourceGuild, targetGuild);
-            if (opts.updateInfo) await this.cloneServerInfo(sourceGuild, targetGuild);
+            if (opts.cloneEmojis && !this.stopped) await this.cloneEmojis(sourceGuild, targetGuild);
+            if (opts.updateInfo && !this.stopped) await this.cloneServerInfo(sourceGuild, targetGuild);
+
+            if (this.stopped) {
+                this.log(`⚠️ Cloning stopped by user.`);
+                return this.stats;
+            }
 
             this.log(`🎉 Cloning completed! Success Rate: ${this.getSuccessRate()}%`);
             return this.stats;
@@ -85,7 +96,9 @@ class ServerCloner {
 
         if (opts.deleteChannels) {
             const channels = guild.channels.cache.filter(ch => ch.deletable);
+
             for (const [, channel] of channels) {
+                if (this.stopped) return;
                 try {
                     await channel.delete();
                     this.log(`Deleted channel: ${channel.name}`);
@@ -99,7 +112,9 @@ class ServerCloner {
 
         if (opts.deleteRoles) {
             const roles = guild.roles.cache.filter(role => role.name !== '@everyone' && !role.managed && role.editable);
+
             for (const [, role] of roles) {
+                if (this.stopped) return;
                 try {
                     await role.delete();
                     this.log(`Deleted role: ${role.name}`);
@@ -113,7 +128,9 @@ class ServerCloner {
 
         if (opts.deleteEmojis) {
             const emojis = guild.emojis.cache.filter(e => e.deletable);
+
             for (const [, emoji] of emojis) {
+                if (this.stopped) return;
                 try {
                     await emoji.delete();
                     this.log(`Deleted emoji: ${emoji.name}`);
@@ -132,7 +149,10 @@ class ServerCloner {
         this.log('👑 Cloning roles...');
         const roles = sourceGuild.roles.cache.filter(role => role.name !== '@everyone').sort((a, b) => a.position - b.position);
 
+
+
         for (const [, role] of roles) {
+            if (this.stopped) return;
             try {
                 const newRole = await targetGuild.roles.create({
                     name: role.name,
@@ -158,7 +178,10 @@ class ServerCloner {
         this.log('📁 Cloning categories...');
         const categories = sourceGuild.channels.cache.filter(ch => ch.type === 'GUILD_CATEGORY').sort((a, b) => a.position - b.position);
 
+
+
         for (const [, category] of categories) {
+            if (this.stopped) return;
             try {
                 const overwrites = this.mapPermissionOverwrites(category.permissionOverwrites, targetGuild);
                 await targetGuild.channels.create(category.name, {
@@ -181,7 +204,10 @@ class ServerCloner {
         this.log('💬 Cloning channels...');
         const channels = sourceGuild.channels.cache.filter(ch => ch.type === 'GUILD_TEXT' || ch.type === 'GUILD_VOICE').sort((a, b) => a.position - b.position);
 
+
+
         for (const [, channel] of channels) {
+            if (this.stopped) return;
             try {
                 const overwrites = this.mapPermissionOverwrites(channel.permissionOverwrites, targetGuild);
                 const parent = channel.parent ? targetGuild.channels.cache.find(c => c.name === channel.parent.name && c.type === 'GUILD_CATEGORY') : null;
@@ -223,12 +249,14 @@ class ServerCloner {
     async cloneEmojis(sourceGuild, targetGuild) {
         this.log('😀 Cloning emojis...');
         for (const [, emoji] of sourceGuild.emojis.cache) {
+            if (this.stopped) return;
             try {
                 const data = await downloadImage(emoji.url);
                 await targetGuild.emojis.create(data, emoji.name, { reason: 'Server Cloner' });
                 this.log(`Created emoji: ${emoji.name}`);
                 this.stats.emojisCreated++;
-                await delay(5000);
+                // 10 second delay for emojis to prevent rate limits
+                await delay(10000);
             } catch (error) {
                 this.log(`Failed to clone emoji ${emoji.name}: ${error.message}`);
                 this.stats.failed++;

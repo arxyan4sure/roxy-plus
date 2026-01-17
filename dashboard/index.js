@@ -770,6 +770,7 @@ module.exports = (client) => {
 
     // In-memory state for Cloner
     const clonerState = {
+        instance: null,
         isRunning: false,
         logs: [],
         sourceId: '',
@@ -831,19 +832,36 @@ module.exports = (client) => {
             if (clonerState.logs.length > 500) clonerState.logs.shift();
         });
 
+        clonerState.instance = cloner;
+
         // Run in background
         cloner.cloneServer(sourceId, targetId, options)
             .then(stats => {
                 clonerState.stats = stats;
                 clonerState.isRunning = false;
+                clonerState.instance = null;
                 clonerState.logs.push(`[${new Date().toLocaleTimeString()}] Process completed successfully.`);
             })
             .catch(err => {
                 clonerState.isRunning = false;
-                clonerState.logs.push(`[${new Date().toLocaleTimeString()}] Error: ${err.message}`);
+                clonerState.instance = null;
+                // If stopped manually, we might have already logged "stopped by user" in cloner, but let's be safe
+                if (err.message !== 'Cloning stopped by user.') { // Assuming standard error if any
+                    clonerState.logs.push(`[${new Date().toLocaleTimeString()}] Error: ${err.message}`);
+                }
             });
 
         res.json({ success: true });
+    });
+
+    app.post('/api/cloner/stop', (req, res) => {
+        if (clonerState.instance) {
+            clonerState.instance.stop();
+            // Logging is handled inside Cloner stop() -> log()
+            res.json({ success: true, message: 'Stop signal sent.' });
+        } else {
+            res.json({ success: false, message: 'No active process' });
+        }
     });
 
     app.listen(port, () => {

@@ -443,9 +443,20 @@
                     <label class="switch"><input type="checkbox" id="cloneRoles" checked><span
                             class="slider"></span></label>
                 </div>
-                <div class="option-item">
-                    <span class="option-label">Clone Emojis</span>
-                    <label class="switch"><input type="checkbox" id="cloneEmojis"><span class="slider"></span></label>
+                <div class="option-item" style="grid-column: span 2; display: block;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="option-label">Clone Emojis</span>
+                        <label class="switch">
+                            <input type="checkbox" id="cloneEmojis" onchange="toggleEmojiWarning(this)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="emojiWarning"
+                        style="display: none; margin-top: 12px; font-size: 0.85rem; color: #ff6b6b; background: rgba(255, 71, 87, 0.08); padding: 8px 12px; border-radius: 8px; border-left: 3px solid #ff4757;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <b>Warning:</b> Enabling this will significantly slow down the process (10s delay per emoji) to
+                        prevent rate limits.
+                    </div>
                 </div>
                 <div class="option-item" style="grid-column: span 2;">
                     <span class="option-label">Update Server Name &amp; Icon</span>
@@ -453,8 +464,10 @@
                 </div>
             </div>
 
-            <div class="action-area">
+            <div class="action-area" style="display: flex; gap: 20px;">
                 <button class="btn-clone" id="startBtn" onclick="startCloning()">Start Cloning</button>
+                <button class="btn-clone" id="stopBtn" onclick="stopCloning()"
+                    style="background: #e74c3c; display: none;">Force Stop</button>
             </div>
         </div>
 
@@ -569,6 +582,37 @@
 
             let logsSeen = 0;
 
+            function toggleEmojiWarning(el) {
+                const warning = document.getElementById('emojiWarning');
+                if (el.checked) {
+                    warning.style.display = 'block';
+                    // Small animation
+                    warning.style.opacity = '0';
+                    warning.style.transform = 'translateY(-5px)';
+                    setTimeout(() => {
+                        warning.style.transition = 'all 0.3s ease';
+                        warning.style.opacity = '1';
+                        warning.style.transform = 'translateY(0)';
+                    }, 10);
+                } else {
+                    warning.style.display = 'none';
+                }
+            }
+
+            async function stopCloning() {
+                if (!confirm('Are you sure you want to force stop the process?')) return;
+                try {
+                    const res = await fetch('/api/cloner/stop', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.success) {
+                        alert('Stop signal sent.');
+                        // pollStatus will handle UI reset eventually
+                    } else {
+                        alert(data.message);
+                    }
+                } catch (e) { alert(e.message); }
+            }
+
             async function pollStatus() {
                 try {
                     const res = await fetch('/api/cloner/status');
@@ -594,11 +638,13 @@
                     }
 
                     if (isCloning) {
-                        document.getElementById('startBtn').innerText = "Cloning in Progress...";
-                        document.getElementById('startBtn').disabled = true;
+                        document.getElementById('startBtn').style.display = 'none';
+                        document.getElementById('stopBtn').style.display = 'block';
                         setTimeout(pollStatus, 2000);
                     } else {
+                        document.getElementById('startBtn').style.display = 'block';
                         document.getElementById('startBtn').innerText = "Start Cloning";
+                        document.getElementById('stopBtn').style.display = 'none';
                         checkBtn();
                     }
                 } catch (e) { setTimeout(pollStatus, 5000); }
