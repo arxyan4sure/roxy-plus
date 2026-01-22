@@ -3,15 +3,15 @@
 </p>
 
 <p align="center">
-  <a href="https://www.youtube.com/watch?v=CREvwJXNlvc">
-    <img src="https://img.youtube.com/vi/CREvwJXNlvc/maxresdefault.jpg" alt="Watch the video" width="440" style="border-radius: 20px;">
+  <a href="https://youtu.be/pNzKq-FPDGw">
+    <img src="https://img.youtube.com/vi/pNzKq-FPDGw/maxresdefault.jpg" alt="Watch the video" width="440" style="border-radius: 20px;">
   </a>
   <br>
   <sub>Click on image to watch tutorial</sub>
 </p>
 
 <p align="center">
-  Request new commands
+  Request new commands on dc
 </p>
 
 <p align="center">
